@@ -1,0 +1,30 @@
+*.retry
+*.pyc
+__pycache__/
+.molecule/
+.cache/
+*.log
+.DS_Store
+.pytest_cache/
+.docker/ssh-keys/
+workspace/.ssh/
+venv/
+
+# Range state — attacker-published status file + rotation latch
+.lab/
+
+# Internal dev files
+CLAUDE.md
+AGENTS.md
+IMPLEMENTATION_PLAN.md
+ideas.md
+fixes.md
+PLAN.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Command Center
+.cc-config.json

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Fleet web-service preflight: the platform team's health-warmup hook.
+# Makes every nginx (re)start a deterministic ~3s window — this is why a
+# naive parallel restart drops the fleet and a rolling restart does not.
+sleep 3

@@ -1,0 +1,106 @@
+services:
+  # ── Fleet targets (the nodes you triage + eradicate) ─────────────────────
+  # Each ships COMPROMISED with four baked-in implants. nginx on each node is
+  # the scored service — availability is a quorum (>=2 of 3 answering /healthz).
+  sdc-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    container_name: sdc-app
+    hostname: sdc-app
+    privileged: true
+    cgroup: host
+    tmpfs:
+      - /run
+      - /run/lock
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - ./ssh-keys/authorized_keys:/home/cadet/.ssh/authorized_keys:ro
+    networks:
+      fleet_net:
+        ipv4_address: 172.30.0.11
+    ports:
+      - "2221:22"
+
+  sdc-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    container_name: sdc-web
+    hostname: sdc-web
+    privileged: true
+    cgroup: host
+    tmpfs:
+      - /run
+      - /run/lock
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - ./ssh-keys/authorized_keys:/home/cadet/.ssh/authorized_keys:ro
+    networks:
+      fleet_net:
+        ipv4_address: 172.30.0.12
+    ports:
+      - "2222:22"
+
+  sdc-db:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    container_name: sdc-db
+    hostname: sdc-db
+    privileged: true
+    cgroup: host
+    tmpfs:
+      - /run
+      - /run/lock
+      - /tmp
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - ./ssh-keys/authorized_keys:/home/cadet/.ssh/authorized_keys:ro
+    networks:
+      fleet_net:
+        ipv4_address: 172.30.0.13
+    ports:
+      - "2223:22"
+
+  # ── Range infrastructure — opaque to cadets ─────────────────────────────
+  # sdc-noise wears two hats:
+  #   1. C2 sink   — receives the implants' beacon check-ins (/checkin). Lets
+  #      the harness prove eradication behaviourally: the callbacks must cease.
+  #   2. Uptime monitor — probes every node's /healthz at 10 Hz and latches the
+  #      worst availability during an armed segment. This is what scores whether
+  #      your remediation kept the fleet up (quorum >= 2) or dropped it.
+  # Arm/read it over host port 9000. Latched state lands in gitignored .lab/.
+  sdc-noise:
+    build:
+      context: .
+      dockerfile: Dockerfile.noise
+    container_name: sdc-noise
+    hostname: sdc-noise
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN          # to add the .30 monitor source IP at boot
+    mem_limit: 128m
+    pids_limit: 128
+    volumes:
+      # C2 callback log + uptime segment state, read by the ARIA harness.
+      # Host-side, gitignored. See scripts/setup-lab.sh.
+      - ../.lab:/lab
+    networks:
+      fleet_net:
+        ipv4_address: 172.30.0.20
+    ports:
+      - "9000:80"
+    depends_on:
+      - sdc-app
+      - sdc-web
+      - sdc-db
+
+networks:
+  fleet_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

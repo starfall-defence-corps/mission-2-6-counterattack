@@ -1,0 +1,4 @@
+#!/bin/sh
+# Starfall fleet "telemetry sync" — planted persistence payload (inert stub).
+# Range infrastructure. In a real incident this would exfiltrate host facts.
+: 

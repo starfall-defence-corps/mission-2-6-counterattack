@@ -1,0 +1,43 @@
+---
+# ============================================================================
+#  triage.yml  —  YOUR reconnaissance playbook   (Phase 1)
+# ============================================================================
+# Mission: hunt the fleet for persistence WITHOUT changing anything, and write
+# a structured report to reports/triage-report.yml that ARIA can verify.
+#
+# There are FOUR implants on every node. Find each one:
+#   1. a malicious cron job          (/etc/cron.d/starfall-sync)
+#   2. a rogue systemd beacon        (starfall-beacon.service + .timer)
+#   3. an extra authorized_key on root  (comment: attacker@starfall-shadow)
+#   4. a backdoor user               (svc-telemetry, with a sudoers drop-in)
+#
+# Your report must be valid YAML shaped exactly like this (one block per node):
+#
+#   triage:
+#     sdc-app:
+#       cron:           { found: true, signature: starfall-sync,          telemetry_id: "<live nonce>" }
+#       beacon:         { found: true, signature: starfall-beacon }
+#       authorized_key: { found: true, signature: attacker@starfall-shadow }
+#       backdoor_user:  { found: true, signature: svc-telemetry }
+#     sdc-web: { ...same shape... }
+#     sdc-db:  { ...same shape... }
+#
+# The `telemetry_id` is a per-host nonce hidden in the cron implant's comment
+# (`# telemetry-id: ...`). You can only know it by reading it LIVE from each
+# node — gather it, don't guess it.
+#
+# Reconnaissance must be READ-ONLY. Put `changed_when: false` on every probe so
+# your triage changes nothing on the fleet.
+#
+# HINT: gather facts per host (a second play on `hosts: localhost`,
+#       `become: false`, can assemble hostvars into the report file with the
+#       template or copy module). See docs/EXERCISES.md and docs/HINTS.md.
+
+- name: Triage the fleet for persistence
+  hosts: fleet
+  become: true
+  gather_facts: false
+  tasks: []          # TODO: add your read-only recon tasks here
+
+# TODO: add a second play (hosts: localhost, become: false) that writes
+#       reports/triage-report.yml from what you gathered above.

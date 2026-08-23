@@ -1,0 +1,125 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV container=docker
+
+# Fleet node image — systemd + SSH + the scored web service (nginx) + the
+# tooling a cadet needs to hunt and eradicate persistence (cron, iptables,
+# curl). This image ships COMPROMISED: four planted implants are baked in
+# below. They are opaque range infrastructure — cadets never read this file;
+# they discover the implants by triaging the running fleet.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    systemd \
+    systemd-sysv \
+    openssh-server \
+    python3 \
+    python3-apt \
+    sudo \
+    iproute2 \
+    procps \
+    cron \
+    curl \
+    nginx \
+    iptables \
+    && rm -rf /var/lib/apt/lists/*
+
+# Mask systemd units that misbehave in containers.
+RUN systemctl mask \
+    dev-hugepages.mount \
+    sys-fs-fuse-connections.mount \
+    systemd-udev-trigger.service \
+    systemd-udevd.service \
+    systemd-update-utmp.service \
+    getty@.service \
+    getty.target
+
+# Base services running from boot: SSH, the scored web service, and cron
+# (which the malicious cron implant rides on).
+RUN systemctl enable ssh \
+    && systemctl enable nginx \
+    && systemctl enable cron
+
+# --- SSH access for the cadet (key bind-mounted read-only at runtime) --------
+RUN mkdir -p /run/sshd \
+    && sed -i 's/#\?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config \
+    && sed -i 's/#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config \
+    && sed -i 's/#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+
+RUN useradd -m -s /bin/bash cadet \
+    && echo 'cadet ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/cadet \
+    && chmod 0440 /etc/sudoers.d/cadet \
+    && mkdir -p /home/cadet/.ssh \
+    && chmod 700 /home/cadet/.ssh \
+    && chown cadet:cadet /home/cadet/.ssh
+
+# --- The credential the cadet must rotate ------------------------------------
+# root's password is a known, leaked secret. Its /etc/shadow hash is recorded
+# in the range baseline at setup; rotating it changes the hash (verifiable
+# without ever knowing the new secret).
+RUN echo 'root:starfall' | chpasswd
+
+# =============================================================================
+#  SCORED SERVICE — nginx serving /healthz, with a deterministic ~3s preflight
+# =============================================================================
+# The preflight drop-in is legitimate platform config the cadet KEEPS. It makes
+# every nginx (re)start a ~3s window, so restarting all three nodes at once
+# drops the fleet below quorum while a rolling restart never does.
+COPY iocs/nginx-default.conf /etc/nginx/sites-available/default
+COPY iocs/nginx-preflight /usr/local/bin/nginx-preflight
+RUN chmod 0755 /usr/local/bin/nginx-preflight \
+    && mkdir -p /etc/systemd/system/nginx.service.d \
+    && printf '[Service]\nTimeoutStartSec=30\nExecStartPre=/usr/local/bin/nginx-preflight\n' \
+       > /etc/systemd/system/nginx.service.d/20-preflight.conf
+
+# =============================================================================
+#  PLANTED PERSISTENCE — four implants (range infrastructure, opaque to cadets)
+# =============================================================================
+
+# --- IOC 1: malicious cron job (per-host nonce injected at `make setup`) ------
+# The comment carries a telemetry-id nonce that only a live triage of the node
+# can surface — a hand-written report cannot fake it.
+COPY iocs/.sync-agent /usr/local/bin/.sync-agent
+RUN chmod 0755 /usr/local/bin/.sync-agent \
+    && printf '# Starfall fleet telemetry sync\n# telemetry-id: __NONCE__\n*/1 * * * * root /usr/local/bin/.sync-agent\n' \
+       > /etc/cron.d/starfall-sync \
+    && chmod 0644 /etc/cron.d/starfall-sync
+
+# --- IOC 2: rogue beacon service + timer (behavioural C2) ---------------------
+# Fires every ~10s: curls the operator's C2 sink at 172.30.0.20. The sink
+# latches per-node check-ins, so eradication is behaviourally verifiable — the
+# callbacks must cease. The nginx drop-in below wires nginx to Want the beacon,
+# so the cadet must remove it and restart nginx to fully clean the unit graph.
+COPY iocs/.beacon /usr/local/bin/.beacon
+COPY iocs/starfall-beacon.service /etc/systemd/system/starfall-beacon.service
+COPY iocs/starfall-beacon.timer /etc/systemd/system/starfall-beacon.timer
+RUN chmod 0755 /usr/local/bin/.beacon \
+    && systemctl enable starfall-beacon.timer \
+    && printf '[Unit]\nWants=starfall-beacon.service\nAfter=starfall-beacon.service\n' \
+       > /etc/systemd/system/nginx.service.d/10-beacon.conf
+
+# --- IOC 3: extra authorized_key on root (attacker's spare way in) ------------
+# Kept strictly in /root/.ssh — the cadet's key is a separate, read-only mount,
+# so removing this can never lock the cadet out.
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh \
+    && echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIStarfallShadowImplantKey000000000000000000000 attacker@starfall-shadow' \
+       >> /root/.ssh/authorized_keys \
+    && chmod 600 /root/.ssh/authorized_keys
+
+# --- IOC 4: backdoor user with passwordless sudo ------------------------------
+# Locked password + no running process (can't break the lab); the real teeth
+# are the NOPASSWD sudoers drop-in. Must be fully removed (userdel -r).
+RUN useradd -u 1337 -m -s /bin/bash svc-telemetry \
+    && usermod -L svc-telemetry \
+    && mkdir -p /home/svc-telemetry/.ssh && chmod 700 /home/svc-telemetry/.ssh \
+    && echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIStarfallShadowImplantKey000000000000000000000 attacker@starfall-shadow' \
+       > /home/svc-telemetry/.ssh/authorized_keys \
+    && chmod 600 /home/svc-telemetry/.ssh/authorized_keys \
+    && chown -R svc-telemetry:svc-telemetry /home/svc-telemetry/.ssh \
+    && printf 'svc-telemetry ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/svc-telemetry \
+    && chmod 0440 /etc/sudoers.d/svc-telemetry
+
+EXPOSE 22 80
+
+STOPSIGNAL SIGRTMIN+3
+
+CMD ["/sbin/init"]

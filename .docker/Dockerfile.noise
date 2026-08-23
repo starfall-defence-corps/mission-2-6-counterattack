@@ -1,0 +1,17 @@
+# sdc-noise — range infrastructure for the Counterattack mission.
+# Two roles in one small stdlib server: the implants' C2 sink and the fleet
+# uptime monitor. Opaque attacker/observer simulation — cadets never read it.
+FROM python:3.12-slim
+
+# iproute2 lets the server add its .30 monitor source IP at boot, so it can
+# probe the fleet from an address the cadet's C2 block (.20) never touches.
+RUN apt-get update && apt-get install -y --no-install-recommends iproute2 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /opt/noise /lab
+
+COPY c2-uptime-server.py /opt/noise/c2-uptime-server.py
+
+ENV PYTHONUNBUFFERED=1
+
+ENTRYPOINT ["python3", "/opt/noise/c2-uptime-server.py"]

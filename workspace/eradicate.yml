@@ -1,0 +1,37 @@
+---
+# ============================================================================
+#  eradicate.yml  —  YOUR eradication playbook   (Phases 2-5)
+# ============================================================================
+# Mission: remove ALL four implants on EVERY node, rotate the leaked credential,
+# block the operator's C2 — and keep the web service up the whole time.
+#
+# What "done" means, per node:
+#   Phase 2  cron job + hidden payload gone; beacon timer stopped, disabled, and
+#            its .service/.timer/payload + the nginx dependency drop-in deleted
+#            (then `daemon_reload`); the C2 callbacks must cease.
+#   Phase 3  backdoor user removed with `userdel -r` (delete its home) AND its
+#            sudoers drop-in removed; the attacker's root authorized_key removed;
+#            the leaked root password rotated.
+#   Phase 4  egress to the C2 sink (172.30.0.20) dropped by the firewall.
+#   Phase 5  the web service (nginx) restarted to apply the cleaned unit graph —
+#            WITHOUT ever dropping the fleet below quorum (>=2 of 3 nodes serving
+#            /healthz at all times).
+#
+# THE HARD PART (Phase 5): removing the beacon's nginx drop-in changes nginx's
+# unit configuration, so you must restart nginx to apply it. Each restart takes
+# ~3 seconds. If you restart all three nodes at once, the whole fleet goes dark
+# together and you FAIL the availability check. Restart them ONE AT A TIME,
+# waiting for each node's /healthz to come back before moving to the next
+# (`serial: 1` + a `wait_for`/`uri` health gate — your Mission 2.3 skills).
+#
+# HINT: do the order-independent cleanup (files, user, key, credential,
+#       firewall) fleet-wide in one play; put the nginx restart in a SECOND
+#       play with `serial: 1`. See docs/EXERCISES.md and docs/HINTS.md.
+
+- name: Eradicate persistence across the fleet
+  hosts: fleet
+  become: true
+  gather_facts: false
+  tasks: []          # TODO: remove the implants, rotate the credential, block the C2
+
+# TODO: add a second play (serial: 1) that restarts nginx behind a health gate.
