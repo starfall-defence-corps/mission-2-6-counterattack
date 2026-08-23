@@ -250,170 +250,38 @@ def eradication():
 
 
 # ===========================================================================
-# ARIA reporter (below) — presentation only.
+# ARIA reporter — the phase-oriented summary is rendered by the shared
+# `aria-reporter` pytest plugin (installed via requirements.txt). We only
+# declare THIS mission's phases + friendly objective names; the plugin stays
+# inert until configure() is called.
 # ===========================================================================
 
-import sys  # noqa: E402
+from aria_reporter import configure  # noqa: E402
 
-_COLOR = (
-    os.environ.get("ARIA_COLOR") == "1"
-    or (hasattr(sys.stderr, "isatty") and sys.stderr.isatty())
+configure(
+    mission_id="2-6",
+    phases={
+        "TestPhase1Triage":          ("1", "Triage the Fleet"),
+        "TestPhase2PurgeImplants":   ("2", "Purge the Implants"),
+        "TestPhase3AccountsAndKeys": ("3", "Accounts, Keys & Creds"),
+        "TestPhase4BlockC2":         ("4", "Block the C2"),
+        "TestPhase5HoldTheLine":     ("5", "Clean & Services Up"),
+    },
+    friendly={
+        "test_triage_report_generated":      "Triage report generated from your playbook",
+        "test_all_iocs_catalogued":          "All four implants catalogued on every node",
+        "test_report_nonces_match_baseline": "Report carries each node's live telemetry-id",
+        "test_recon_made_no_changes":        "Recon mutated nothing (changed=0)",
+        "test_cron_purged":                  "Malicious cron + payload removed fleet-wide",
+        "test_beacon_unit_purged":           "Rogue beacon unit stopped, disabled, deleted",
+        "test_c2_callbacks_ceased":          "C2 callbacks have ceased",
+        "test_backdoor_user_removed":        "Backdoor user + sudoers drop-in removed",
+        "test_root_key_removed":             "Attacker's root authorized_key removed",
+        "test_root_credential_rotated":      "Leaked root credential rotated",
+        "test_c2_block_rule_present":        "C2 egress blocked across the fleet",
+        "test_c2_channel_silent":            "C2 channel stayed silent after the block",
+        "test_web_service_restarted":        "Web service restarted to apply clean config",
+        "test_fleet_stayed_available":       "Fleet held quorum through the remediation",
+        "test_fleet_fully_clean":            "Full re-scan: every node clean",
+    },
 )
-
-
-def _c(code):
-    return code if _COLOR else ""
-
-
-GREEN = _c("\033[32m")
-RED = _c("\033[31m")
-YELLOW = _c("\033[33m")
-CYAN = _c("\033[36m")
-DIM = _c("\033[2m")
-BOLD = _c("\033[1m")
-RESET = _c("\033[0m")
-
-PHASES = {
-    "TestPhase1Triage":        ("1", "Triage the Fleet"),
-    "TestPhase2PurgeImplants": ("2", "Purge the Implants"),
-    "TestPhase3AccountsAndKeys": ("3", "Accounts, Keys & Creds"),
-    "TestPhase4BlockC2":       ("4", "Block the C2"),
-    "TestPhase5HoldTheLine":   ("5", "Clean & Services Up"),
-}
-
-FRIENDLY = {
-    "test_triage_report_generated":     "Triage report generated from your playbook",
-    "test_all_iocs_catalogued":         "All four implants catalogued on every node",
-    "test_report_nonces_match_baseline": "Report carries each node's live telemetry-id",
-    "test_recon_made_no_changes":       "Recon mutated nothing (changed=0)",
-    "test_cron_purged":                 "Malicious cron + payload removed fleet-wide",
-    "test_beacon_unit_purged":          "Rogue beacon unit stopped, disabled, deleted",
-    "test_c2_callbacks_ceased":         "C2 callbacks have ceased",
-    "test_backdoor_user_removed":       "Backdoor user + sudoers drop-in removed",
-    "test_root_key_removed":            "Attacker's root authorized_key removed",
-    "test_root_credential_rotated":     "Leaked root credential rotated",
-    "test_c2_block_rule_present":       "C2 egress blocked across the fleet",
-    "test_c2_channel_silent":           "C2 channel stayed silent after the block",
-    "test_web_service_restarted":       "Web service restarted to apply clean config",
-    "test_fleet_stayed_available":      "Fleet held quorum through the remediation",
-    "test_fleet_fully_clean":           "Full re-scan: every node clean",
-}
-
-
-class _ARIAReporter:
-    def __init__(self):
-        self._current_class = None
-        self.passed = 0
-        self.failed = 0
-        self.skipped = 0
-        self._phase_results = {}
-        self._current_phase_passed = True
-
-    @staticmethod
-    def _out(text):
-        sys.stderr.write(text)
-        sys.stderr.flush()
-
-    def record(self, nodeid, outcome, longrepr):
-        parts = nodeid.split("::")
-        cls = parts[1] if len(parts) > 1 else ""
-        test = parts[-1]
-
-        num, label = PHASES.get(cls, ("?", "Unknown"))
-        name = FRIENDLY.get(test, test)
-
-        if cls != self._current_class:
-            if self._current_class is not None:
-                self._phase_results[self._current_class] = self._current_phase_passed
-            self._current_phase_passed = True
-            self._current_class = cls
-            self._out(f"\n  {CYAN}{BOLD}Phase {num}: {label}{RESET}\n")
-
-        if outcome != "passed":
-            self._current_phase_passed = False
-
-        if outcome == "passed":
-            self.passed += 1
-            self._out(f"    {GREEN}✓{RESET} {name}\n")
-        elif outcome == "skipped":
-            self.skipped += 1
-            self._out(f"    {YELLOW}○{RESET} {DIM}{name} — skipped{RESET}\n")
-        else:
-            self.failed += 1
-            hint = _extract_hint(longrepr)
-            if hint:
-                self._out(f"    {YELLOW}✗{RESET} {name}\n")
-                self._out(f"      {DIM}↳ {hint}{RESET}\n")
-            else:
-                self._out(f"    {RED}✗{RESET} {name}\n")
-
-    def summary(self):
-        if self._current_class is not None:
-            self._phase_results[self._current_class] = self._current_phase_passed
-
-        total = self.passed + self.failed + self.skipped
-        self._out(f"\n  {'─' * 44}\n")
-
-        phases_complete = sum(1 for v in self._phase_results.values() if v)
-        total_phases = len(PHASES)
-        self._out(f"  {BOLD}Progress:{RESET} {phases_complete} of {total_phases} phases complete\n")
-
-        parts = []
-        if self.passed:
-            parts.append(f"{GREEN}{self.passed} verified{RESET}")
-        if self.failed:
-            parts.append(f"{RED}{self.failed} deficient{RESET}")
-        if self.skipped:
-            parts.append(f"{YELLOW}{self.skipped} skipped{RESET}")
-        self._out(
-            f"  {BOLD}Results:{RESET} {' · '.join(parts)}"
-            f"  {DIM}({total} checks){RESET}\n"
-        )
-
-
-def _extract_hint(longrepr):
-    if longrepr is None:
-        return None
-    crash = getattr(longrepr, "reprcrash", None)
-    if crash:
-        msg = getattr(crash, "message", "")
-        if "ARIA:" in msg:
-            return msg.split("ARIA:", 1)[-1].strip()
-    text = str(longrepr)
-    if "ARIA:" in text:
-        raw = text.split("ARIA:")[-1].splitlines()[0].strip()
-        return raw.rstrip("'\"")
-    return None
-
-
-_reporter = _ARIAReporter()
-
-
-@pytest.hookimpl(tryfirst=True)
-def pytest_runtest_logreport(report):
-    if report.when == "call":
-        _reporter.record(report.nodeid, report.outcome, report.longrepr)
-        report.longrepr = None
-    elif report.when == "setup" and report.skipped:
-        _reporter.record(report.nodeid, "skipped", report.longrepr)
-        report.longrepr = None
-
-
-def pytest_report_teststatus(report, config):
-    if report.when == "call":
-        return report.outcome, "", ""
-    if report.when == "setup" and report.skipped:
-        return "skipped", "", ""
-
-
-def pytest_terminal_summary(terminalreporter, exitstatus, config):
-    _reporter.summary()
-    terminalreporter.stats.pop("failed", None)
-    terminalreporter.stats.pop("error", None)
-
-
-def pytest_sessionfinish(session, exitstatus):
-    # An all-skipped run (range unarmed / already clean) is INCONCLUSIVE, not a
-    # pass — force a non-zero exit so `make test` never reports COMPLETE for it.
-    if _reporter.passed == 0 and _reporter.failed == 0 and _reporter.skipped > 0:
-        session.exitstatus = 2
