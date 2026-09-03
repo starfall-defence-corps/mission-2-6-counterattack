@@ -14,7 +14,7 @@ You never touch the intruder's infrastructure directly. Everything you do is def
 
 ## Prerequisites
 
-- All of Module 1 (roles, variables, templates, firewalling) and Module 2 through **2.3 Rolling Updates** (the serial/health-gate pattern is the backbone of this mission's capstone).
+- All of Module 1 (roles, variables, templates, firewalling) and Module 2 through **2.5 Noise Storm** (the serial/health-gate pattern from 2.3 Rolling Updates is the backbone of this mission's capstone, and this mission continues the incident begun in 2.5).
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (with Docker Compose v2)
 - [GNU Make](https://www.gnu.org/software/make/)
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/) (`ansible-core`)
