@@ -44,18 +44,25 @@ value out of `hostvars`. Double-check your render loop is indexing into
 `hostvars[h].your_fact.cron.telemetry_id` (or however you named your
 assembled fact) per host `h`, not referencing a single un-looped variable.
 
-**`delegate_to: localhost` + `run_once: true` — why both?**
-Without `delegate_to: localhost`, a templating task would try to render the
-report *on each remote node* — wrong target entirely. Without
-`run_once: true`, the same task would still execute once per host in the
-play, overwriting the same local report file three times in a row (harmless
-here, but a common source of confusion when debugging "why does my report
-only reflect one host's timing").
+**Why a second play, `hosts: localhost`?**
+The report needs to be rendered exactly once, on the control node — not once
+per fleet host. Putting the render task in the *same* play as your recon
+(`hosts: fleet`) would run it once per remote node, in the wrong place and
+the wrong number of times. A second play targeting `hosts: localhost`,
+placed after your `hosts: fleet` play, sidesteps both problems: `localhost`
+is a single host, so the render task naturally executes once, and it already
+runs where the report file needs to land.
 
-- `delegate_to: localhost` — run the *action* on the control node.
-- `run_once: true` — only execute the task once for the whole play.
+- `hosts: localhost` — a separate play, not a task bolted onto the fleet
+  play, so it runs against the control node instead of the fleet.
+- `gather_facts: false` — you don't need facts about your own control node
+  for this.
 - `become: false` — you don't need (and don't have) root on your own
-  control node.
+  control node to write a local file.
+
+Inside that play, loop `groups['fleet']` and pull each host's assembled fact
+out of `hostvars[h]` — that's how a play running on `localhost` can still see
+what every fleet host gathered in the play before it.
 
 **"ARIA says my triage changed something."**
 Every probe task on the fleet needs `changed_when: false` — without it,
