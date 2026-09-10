@@ -90,7 +90,7 @@ web service can black out the fleet more thoroughly than the Operator ever
 did — a cure worse than the disease. The skill this mission tests is not
 "can you write tasks to delete files." It is "can you sequence irreversible
 changes to a live, scored service without an outage." You have done this
-before, in Mission 2.3. Bring that discipline here.
+before, in [Mission 2.3](https://github.com/starfall-defence-corps/mission-2-3-fleet-sync). Bring that discipline here.
 
 ### 3b. Concept of Operations
 

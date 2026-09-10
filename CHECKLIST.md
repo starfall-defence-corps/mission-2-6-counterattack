@@ -1,7 +1,7 @@
 # Mission 2.6: Counterattack — Progress Tracker
 
 **Rank**: Lieutenant
-**Arc**: Incident Response — Act 2 of 2 (Act 1 was Mission 2.5: Noise Storm)
+**Arc**: Incident Response — Act 2 of 2 (Act 1 was [Mission 2.5: Noise Storm](https://github.com/starfall-defence-corps/mission-2-5-noise-storm))
 
 Check each item off as you complete it. Run `make test` after each phase — it
 re-scores both deliverables against all five phases. If a phase is blocked,
@@ -74,3 +74,5 @@ scored run needs a freshly-armed fleet — `make reset` before a full pass.
 
 - [ ] `make test` — all five phases pass, fleet fully reclaimed
 - [ ] `make submit` — work submitted for ARIA review
+
+**Next stop**: [Master Simulation — Operation: Iron Curtain](https://github.com/starfall-defence-corps/master-simulation)
