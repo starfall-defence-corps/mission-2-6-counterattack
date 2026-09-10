@@ -1,6 +1,6 @@
 # Starfall Defence Corps Academy
 
-> 🧭 [← 2.5 Noise Storm](https://github.com/starfall-defence-corps/mission-2-5-noise-storm) · **You are here: 2.6 Counterattack** · [Master Simulation →](https://github.com/starfall-defence-corps/master-simulation) · [🏠 Academy Hub](https://github.com/starfall-defence-corps/sdc-academy)
+> 🧭 [← 2.5 Noise Storm](https://github.com/starfall-defence-corps/mission-2-5-noise-storm) · **You are here: 2.6 Counterattack** · [Master Simulation →](https://github.com/starfall-defence-corps/master-simulation) · [🏠 Academy Hub](https://github.com/starfall-defence-corps/sdc-academy) · [📚 Field Manuals](https://github.com/starfall-defence-corps/sdc-academy/tree/main/field-manuals)
 
 > ☁️ **No Docker on your machine?** Create your own copy first (Use this template), then on **your** repo: **Code → Codespaces → Create codespace** — everything is preinstalled. First boot takes ~5 min (one-time); after that it starts fast.
 

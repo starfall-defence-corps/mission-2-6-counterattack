@@ -430,7 +430,7 @@ to zero. Zero is below quorum (which needs at least two of three). That is
 an outage you caused, and it fails this phase outright — regardless of how
 clean the rest of your eradication was.
 
-You solved this exact class of problem in **Mission 2.3**: restart one node
+You solved this exact class of problem in **[Mission 2.3](https://github.com/starfall-defence-corps/mission-2-3-fleet-sync)**: restart one node
 at a time, wait for it to prove itself healthy again, *then* move to the
 next.
 
