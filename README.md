@@ -71,6 +71,8 @@ source venv/bin/activate
 +---------------------------------------------------------------+
 ```
 
+> ⚠️ **Addressing differs from Module 1**: here `sdc-app` holds `.11`/`2221` and `sdc-web` sits at `.12`/`2222` — check the diagram before reusing Module-1 muscle memory.
+
 The three fleet nodes are yours to triage and clean. `sdc-noise` is opaque
 range infrastructure with two jobs: it is the intruder's C2 sink (the implants
 beacon out to it), and — from a separate monitor address — it watches every
