@@ -22,10 +22,10 @@ scored run needs a freshly-armed fleet — `make reset` before a full pass.
 ## Phase 1: Triage the Fleet
 
 - [ ] `triage.yml` gathers all **four** IOCs per node, read-only (`changed_when: false` on every probe)
-- [ ] Cron implant detected: `/etc/cron.d/starfall-sync`
-- [ ] Rogue beacon detected: `starfall-beacon.service` / `.timer`
-- [ ] Extra root `authorized_key` detected: comment `attacker@starfall-shadow`
-- [ ] Backdoor user detected: `svc-telemetry`
+- [ ] The cron-based persistence identified (path recorded in your triage report)
+- [ ] The rogue systemd unit identified (service and timer recorded)
+- [ ] The unauthorised root SSH key identified (key comment recorded)
+- [ ] The backdoor account identified (username recorded)
 - [ ] Each host's live **telemetry-id** nonce (from the cron implant's comment) is captured and written into the report — not guessed or hardcoded
 - [ ] `reports/triage-report.yml` renders one block per host, shaped exactly as documented in `triage.yml`'s header comment
 - [ ] ARIA: report generated, all four IOCs catalogued on every node, nonces match, recon made zero changes
