@@ -77,8 +77,8 @@ beacon out to it), and — from a separate monitor address — it watches every
 node's `/healthz` and latches the worst availability it sees while you work.
 You defend the fleet; ARIA reads the range's own telemetry to score you.
 
-Only one SDC lab can run at a time — all missions share ports 2221-2223 and
-subnet 172.30.0.0/24. Run `make destroy` in any other mission first.
+Only one SDC lab at a time is supported — run `make destroy` in any other
+mission first.
 
 ## Available Commands
 
@@ -133,7 +133,9 @@ skipped and `make test` still works locally.
 
 ## Troubleshooting
 
-**Containers won't start**: Ensure Docker Desktop is running; check for port conflicts on 2221-2223 (only one SDC lab can run at a time — `make destroy` in any other mission first).
+**Containers won't start**: Ensure Docker Desktop is running; check for port conflicts on 2221-2223. Only one SDC lab at a time is supported — run `make destroy` in any other mission first.
+
+**"port is already allocated" on 9000**: `mission-3-4-eyes-everywhere` publishes its collector on host port 9000 too — run `make destroy` there first.
 
 **`make test` shows everything skipped**: the range isn't armed (the fleet is already clean from a prior run) — `make reset`.
 
