@@ -77,7 +77,7 @@ than a hard task failure.
 **Checking your own report before ARIA does.**
 
 ```bash
-ansible-playbook triage.yml
+ansible-playbook workspace/triage.yml
 cat reports/triage-report.yml
 ```
 
@@ -299,9 +299,10 @@ This rebuilds the fleet and re-plants all four implants, while preserving
 everything you've written in `workspace/`.
 
 **"make: *** No targets specified" or "make: *** No rule to make target".**
-You are in the wrong directory. `make` commands must be run from the
-**project root**, where the `Makefile` lives — not from `workspace/`. Run
-`cd ..` to go back.
+You are in the wrong directory. Both `make` and `ansible` commands run from
+the **project root** — the folder with the `Makefile`. Run `ls Makefile` to
+confirm you're in the right place; if it errors, `cd` back to the project
+root.
 
 **If `make test` fails:**
 Read ARIA's error message carefully — it names the specific check that

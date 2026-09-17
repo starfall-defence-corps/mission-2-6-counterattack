@@ -9,18 +9,7 @@ DOCUMENT: EXERCISES — Phase-by-Phase Operational Instructions
 Complete each phase in sequence. Run `make test` after each phase. Do not
 advance until ARIA confirms compliance.
 
-**Two directories, two purposes:**
-
-- **Ansible commands** (`ansible`, `ansible-playbook`): Run from `workspace/` where `ansible.cfg` lives.
-- **Make commands** (`make test`, `make reset`): Run from the **project root** (where the `Makefile` lives).
-
-When a phase says "Run ARIA's Verification", return to the project root first:
-
-```bash
-cd ..        # from workspace/ back to project root
-make test
-cd workspace # return to workspace for the next phase
-```
+**One directory for everything**: run every command in this mission — `ansible ...` and `make ...` — from the **project root** (the folder with the `Makefile`). An `ansible.cfg` lives both there and in `workspace/`, so Ansible works from either; the steps below assume the project root throughout.
 
 **A note on `make test`**: it exercises **both of your deliverables against
 the live fleet** every time — it regenerates `reports/triage-report.yml` by
@@ -56,7 +45,7 @@ make doctor
 
 ### Step 0.2 — Start the Fleet and the Range
 
-From the **project root directory** (not `workspace/`), run:
+From the **project root directory**, run:
 
 ```bash
 make setup
@@ -89,10 +78,9 @@ applied fleet-wide.
 Take a look at what's already scaffolded for you:
 
 ```bash
-cd workspace
-cat triage.yml
-cat eradicate.yml
-cat inventory/hosts.yml
+cat workspace/triage.yml
+cat workspace/eradicate.yml
+cat workspace/inventory/hosts.yml
 ```
 
 Both playbooks are stubs (`tasks: []`) with header comments describing
@@ -216,10 +204,8 @@ multi-host report in one render.
 
 ### Step 1.4 — Run It
 
-From `workspace/`:
-
 ```bash
-ansible-playbook triage.yml
+ansible-playbook workspace/triage.yml
 ```
 
 Check the result:
@@ -235,9 +221,7 @@ blank, not the same across hosts).
 ### Step 1.5 — Run ARIA's Verification
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 ARIA re-runs your `triage.yml` itself (on the still-compromised fleet), then
@@ -291,13 +275,11 @@ is the one step that actually interrupts service.
 ### Step 2.3 — Apply and Verify
 
 ```bash
-ansible-playbook eradicate.yml
+ansible-playbook workspace/eradicate.yml
 ```
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 ARIA checks (via a live probe inside each container, independent of your
@@ -345,13 +327,11 @@ the new credential never lands in your run output.
 ### Step 3.2 — Apply and Verify
 
 ```bash
-ansible-playbook eradicate.yml
+ansible-playbook workspace/eradicate.yml
 ```
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 ARIA checks: the `svc-telemetry` account, its home directory, and its
@@ -389,13 +369,11 @@ sink.
 ### Step 4.2 — Apply and Verify
 
 ```bash
-ansible-playbook eradicate.yml
+ansible-playbook workspace/eradicate.yml
 ```
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 ARIA checks that a matching `DROP` (or `REJECT`) rule against 172.30.0.20
@@ -458,9 +436,7 @@ single node gets restarted in turn.
 ### Step 5.4 — Run ARIA's Final Verification
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 For this phase, ARIA arms a monitored segment, runs your **entire**
