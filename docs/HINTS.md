@@ -78,7 +78,7 @@ than a hard task failure.
 
 ```bash
 ansible-playbook workspace/triage.yml
-cat reports/triage-report.yml
+cat workspace/reports/triage-report.yml
 ```
 
 Confirm all three hosts are present, all four categories say `found: true`
