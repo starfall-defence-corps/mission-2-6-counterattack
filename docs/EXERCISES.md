@@ -9,21 +9,10 @@ DOCUMENT: EXERCISES — Phase-by-Phase Operational Instructions
 Complete each phase in sequence. Run `make test` after each phase. Do not
 advance until ARIA confirms compliance.
 
-**Two directories, two purposes:**
-
-- **Ansible commands** (`ansible`, `ansible-playbook`): Run from `workspace/` where `ansible.cfg` lives.
-- **Make commands** (`make test`, `make reset`): Run from the **project root** (where the `Makefile` lives).
-
-When a phase says "Run ARIA's Verification", return to the project root first:
-
-```bash
-cd ..        # from workspace/ back to project root
-make test
-cd workspace # return to workspace for the next phase
-```
+**One directory for everything**: run every command in this mission — `ansible ...` and `make ...` — from the **project root** (the folder with the `Makefile`). An `ansible.cfg` lives both there and in `workspace/`, so Ansible works from either; the steps below assume the project root throughout.
 
 **A note on `make test`**: it exercises **both of your deliverables against
-the live fleet** every time — it regenerates `reports/triage-report.yml` by
+the live fleet** every time — it regenerates `workspace/reports/triage-report.yml` by
 re-running your `triage.yml`, then arms a monitored segment and runs your
 `eradicate.yml` **exactly once**, latching the worst availability it observes
 during that run. Because eradication is graded on live availability, running
@@ -56,7 +45,7 @@ make doctor
 
 ### Step 0.2 — Start the Fleet and the Range
 
-From the **project root directory** (not `workspace/`), run:
+From the **project root directory**, run:
 
 ```bash
 make setup
@@ -89,10 +78,9 @@ applied fleet-wide.
 Take a look at what's already scaffolded for you:
 
 ```bash
-cd workspace
-cat triage.yml
-cat eradicate.yml
-cat inventory/hosts.yml
+cat workspace/triage.yml
+cat workspace/eradicate.yml
+cat workspace/inventory/hosts.yml
 ```
 
 Both playbooks are stubs (`tasks: []`) with header comments describing
@@ -139,7 +127,7 @@ only the lab state is reset.
 
 You will fill in `workspace/triage.yml` — a playbook with (at least) two
 plays: one that gathers evidence from the fleet, and one that renders that
-evidence into `reports/triage-report.yml`.
+evidence into `workspace/reports/triage-report.yml`. In your render task, write the destination as `{{ playbook_dir }}/reports/triage-report.yml` — `playbook_dir` pins the file next to the playbook (in `workspace/`) no matter which directory you run from.
 
 ### Step 1.1 — Understand the Objective
 
@@ -216,16 +204,14 @@ multi-host report in one render.
 
 ### Step 1.4 — Run It
 
-From `workspace/`:
-
 ```bash
-ansible-playbook triage.yml
+ansible-playbook workspace/triage.yml
 ```
 
 Check the result:
 
 ```bash
-cat reports/triage-report.yml
+cat workspace/reports/triage-report.yml
 ```
 
 Confirm all three hosts appear, all four categories are `found: true` with
@@ -235,9 +221,7 @@ blank, not the same across hosts).
 ### Step 1.5 — Run ARIA's Verification
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 ARIA re-runs your `triage.yml` itself (on the still-compromised fleet), then
@@ -291,13 +275,11 @@ is the one step that actually interrupts service.
 ### Step 2.3 — Apply and Verify
 
 ```bash
-ansible-playbook eradicate.yml
+ansible-playbook workspace/eradicate.yml
 ```
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 ARIA checks (via a live probe inside each container, independent of your
@@ -345,13 +327,11 @@ the new credential never lands in your run output.
 ### Step 3.2 — Apply and Verify
 
 ```bash
-ansible-playbook eradicate.yml
+ansible-playbook workspace/eradicate.yml
 ```
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 ARIA checks: the `svc-telemetry` account, its home directory, and its
@@ -389,13 +369,11 @@ sink.
 ### Step 4.2 — Apply and Verify
 
 ```bash
-ansible-playbook eradicate.yml
+ansible-playbook workspace/eradicate.yml
 ```
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 ARIA checks that a matching `DROP` (or `REJECT`) rule against 172.30.0.20
@@ -458,9 +436,7 @@ single node gets restarted in turn.
 ### Step 5.4 — Run ARIA's Final Verification
 
 ```bash
-cd ..
 make test
-cd workspace
 ```
 
 For this phase, ARIA arms a monitored segment, runs your **entire**
@@ -482,7 +458,7 @@ a run you want scored end-to-end.
 Before closing this mission, confirm the following:
 
 - [ ] `triage.yml` catalogues all four IOCs on every node, read-only (`changed=0`), including each host's live telemetry-id nonce
-- [ ] `reports/triage-report.yml` is valid YAML shaped exactly as specified, one block per host
+- [ ] `workspace/reports/triage-report.yml` is valid YAML shaped exactly as specified, one block per host
 - [ ] `eradicate.yml` removes the cron job, its payload, the beacon unit/timer/payload, and the beacon's nginx drop-in, fleet-wide, with a `daemon_reload`
 - [ ] `eradicate.yml` deletes the backdoor user (with home) and its sudoers drop-in, removes the attacker's root key, and rotates root's password, fleet-wide
 - [ ] `eradicate.yml` firewall-drops all egress to 172.30.0.20 on every node, idempotently

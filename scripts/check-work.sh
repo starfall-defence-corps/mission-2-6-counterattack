@@ -36,7 +36,7 @@ if [ $EXIT_CODE -eq 0 ]; then
     echo -e "  ARIA: All objectives verified."
     echo -e "  Mission 2.6 status: COMPLETE"
     echo -e ""
-    echo -e "  Cadet, the fleet is yours again. Every implant"
+    echo -e "  Lieutenant, the fleet is yours again. Every implant"
     echo -e "  is gone, the credential is rotated, the operator's"
     echo -e "  channel is cut — and the web service never went"
     echo -e "  dark while you did it. Textbook incident response."
