@@ -3,7 +3,9 @@
 #  triage.yml  —  YOUR reconnaissance playbook   (Phase 1)
 # ============================================================================
 # Mission: hunt the fleet for persistence WITHOUT changing anything, and write
-# a structured report to reports/triage-report.yml that ARIA can verify.
+# a structured report to "{{ playbook_dir }}/reports/triage-report.yml"
+# that ARIA can verify (playbook_dir pins it to workspace/reports/ no
+# matter which directory you run from).
 #
 # There are FOUR implants on every node. Find each one:
 #   1. a malicious cron job          (/etc/cron.d/starfall-sync)
@@ -40,4 +42,5 @@
   tasks: []          # TODO: add your read-only recon tasks here
 
 # TODO: add a second play (hosts: localhost, become: false) that writes
-#       reports/triage-report.yml from what you gathered above.
+#       "{{ playbook_dir }}/reports/triage-report.yml" from what you
+#       gathered above.
