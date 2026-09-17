@@ -12,7 +12,7 @@ advance until ARIA confirms compliance.
 **One directory for everything**: run every command in this mission — `ansible ...` and `make ...` — from the **project root** (the folder with the `Makefile`). An `ansible.cfg` lives both there and in `workspace/`, so Ansible works from either; the steps below assume the project root throughout.
 
 **A note on `make test`**: it exercises **both of your deliverables against
-the live fleet** every time — it regenerates `reports/triage-report.yml` by
+the live fleet** every time — it regenerates `workspace/reports/triage-report.yml` by
 re-running your `triage.yml`, then arms a monitored segment and runs your
 `eradicate.yml` **exactly once**, latching the worst availability it observes
 during that run. Because eradication is graded on live availability, running
@@ -127,7 +127,7 @@ only the lab state is reset.
 
 You will fill in `workspace/triage.yml` — a playbook with (at least) two
 plays: one that gathers evidence from the fleet, and one that renders that
-evidence into `reports/triage-report.yml`.
+evidence into `workspace/reports/triage-report.yml`. In your render task, write the destination as `{{ playbook_dir }}/reports/triage-report.yml` — `playbook_dir` pins the file next to the playbook (in `workspace/`) no matter which directory you run from.
 
 ### Step 1.1 — Understand the Objective
 
@@ -211,7 +211,7 @@ ansible-playbook workspace/triage.yml
 Check the result:
 
 ```bash
-cat reports/triage-report.yml
+cat workspace/reports/triage-report.yml
 ```
 
 Confirm all three hosts appear, all four categories are `found: true` with
@@ -458,7 +458,7 @@ a run you want scored end-to-end.
 Before closing this mission, confirm the following:
 
 - [ ] `triage.yml` catalogues all four IOCs on every node, read-only (`changed=0`), including each host's live telemetry-id nonce
-- [ ] `reports/triage-report.yml` is valid YAML shaped exactly as specified, one block per host
+- [ ] `workspace/reports/triage-report.yml` is valid YAML shaped exactly as specified, one block per host
 - [ ] `eradicate.yml` removes the cron job, its payload, the beacon unit/timer/payload, and the beacon's nginx drop-in, fleet-wide, with a `daemon_reload`
 - [ ] `eradicate.yml` deletes the backdoor user (with home) and its sudoers drop-in, removes the attacker's root key, and rotates root's password, fleet-wide
 - [ ] `eradicate.yml` firewall-drops all egress to 172.30.0.20 on every node, idempotently
